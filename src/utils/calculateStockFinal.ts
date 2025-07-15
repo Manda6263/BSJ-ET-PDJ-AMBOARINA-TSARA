@@ -107,25 +107,45 @@ function findProductSales(product: Product, allSales: RegisterSale[], useCache: 
   const normalizedProductName = normalizeString(product.name);
   const normalizedProductCategory = normalizeString(product.category);
 
-  // Use more efficient filtering
-  const result = allSales.filter(sale => {
+  // Create a map to track which sales have been assigned to products
+  // This prevents double-counting sales across multiple products
+  const saleAssignmentMap = new Map<string, boolean>();
+  
+  // First pass: exact matches only
+  const exactMatches = allSales.filter(sale => {
     const normalizedSaleName = normalizeString(sale.product);
     const normalizedSaleCategory = normalizeString(sale.category);
     
-    // Exact match first
-    if (normalizedSaleName === normalizedProductName && 
-        normalizedSaleCategory === normalizedProductCategory) {
-      return true;
-    }
+    return normalizedSaleName === normalizedProductName && 
+           normalizedSaleCategory === normalizedProductCategory;
+  });
+  
+  // Mark exact matches as assigned
+  exactMatches.forEach(sale => saleAssignmentMap.set(sale.id, true));
+  
+  // Second pass: fuzzy matches, but only for unassigned sales
+  const fuzzyMatches = allSales.filter(sale => {
+    // Skip if already assigned
+    if (saleAssignmentMap.has(sale.id)) return false;
     
-    // Fuzzy match for similar names in same category
+    const normalizedSaleName = normalizeString(sale.product);
+    const normalizedSaleCategory = normalizeString(sale.category);
+    
+    // Only match within same category
     if (normalizedSaleCategory === normalizedProductCategory) {
-      return normalizedSaleName.includes(normalizedProductName) || 
-             normalizedProductName.includes(normalizedSaleName);
+      // Check for partial name matches
+      if (normalizedSaleName.includes(normalizedProductName) || 
+          normalizedProductName.includes(normalizedSaleName)) {
+        saleAssignmentMap.set(sale.id, true);
+        return true;
+      }
     }
     
     return false;
   });
+  
+  // Combine exact and fuzzy matches
+  const result = [...exactMatches, ...fuzzyMatches];
   
   // Store in cache
   if (useCache) {
