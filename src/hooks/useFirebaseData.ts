@@ -18,6 +18,9 @@ import { RegisterSale, Product, DashboardStats, Alert } from '../types';
 import { format, subDays, parseISO } from 'date-fns';
 import { calculateStockFinal } from '../utils/calculateStockFinal';
 
+// Add import for the cache clearing function
+import { clearProductSalesCache } from '../utils/calculateStockFinal';
+
 export function useFirebaseData() {
   const [registerSales, setRegisterSales] = useState<RegisterSale[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -79,6 +82,9 @@ export function useFirebaseData() {
       console.log(`📊 Loaded ${sales.length} sales from Firebase`);
       setRegisterSales(sales);
       calculateDashboardStats(sales);
+      
+      // Clear the product sales cache when sales data changes
+      clearProductSalesCache();
     } catch (error) {
       console.error('Erreur lors du chargement des ventes:', error);
       // Fallback to mock data
@@ -367,6 +373,9 @@ export function useFirebaseData() {
   // ✅ ENHANCED: Recalculate all product quantities based on current sales
   const recalculateProductQuantities = async () => {
     console.log(`🔄 Starting stock recalculation with ${registerSales.length} sales and ${products.length} products...`);
+
+    // Clear the product sales cache before recalculation
+    clearProductSalesCache();
     
     if (products.length === 0) {
       console.log('⚠️ No products available for recalculation');
@@ -573,6 +582,9 @@ export function useFirebaseData() {
 
       // Reload sales data to ensure synchronization
       await loadRegisterSales();
+      
+      // Clear the product sales cache after deletion
+      clearProductSalesCache();
       
       // The useEffect will automatically trigger recalculateProductQuantities
       console.log('✅ Sales import completed - quantities will be recalculated automatically');
@@ -942,6 +954,10 @@ export function useFirebaseData() {
       
       // ✅ CRITICAL: The useEffect will trigger recalculation when registerSales changes
       console.log('✅ Local sales deletion completed - stock recalculation will be triggered automatically');
+      
+      // Clear the product sales cache after deletion
+      clearProductSalesCache();
+      
       return false;
     }
   };
@@ -995,6 +1011,10 @@ export function useFirebaseData() {
   const refreshData = async () => {
     console.log('🔄 Refreshing all data...');
     await loadInitialData();
+    
+    // Clear the product sales cache after refresh
+    clearProductSalesCache();
+    
     // The useEffect will automatically trigger recalculateProductQuantities
     console.log('✅ Data refresh completed');
   };

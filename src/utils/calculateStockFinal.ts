@@ -1,6 +1,9 @@
 import { Product, RegisterSale } from '../types';
 import { format, parseISO, isAfter, isBefore, startOfDay } from 'date-fns';
 
+// Create a cache for product sales to avoid repeated filtering
+const productSalesCache = new Map<string, RegisterSale[]>();
+
 export interface StockCalculationResult {
   finalStock: number;
   validSales: RegisterSale[];
@@ -21,14 +24,24 @@ export interface StockValidationWarning {
  */
 export function calculateStockFinal(
   product: Product, 
-  allSales: RegisterSale[]
+  allSales: RegisterSale[],
+  useCache: boolean = true
 ): StockCalculationResult {
   // Default values
   const initialStock = product.initialStock || 0;
   const initialStockDate = product.initialStockDate;
   
-  // Find all sales for this product
-  const productSales = findProductSales(product, allSales);
+  // Find all sales for this product (with caching)
+  let productSales: RegisterSale[];
+  
+  if (useCache && productSalesCache.has(product.id)) {
+    productSales = productSalesCache.get(product.id)!;
+  } else {
+    productSales = findProductSales(product, allSales);
+    if (useCache) {
+      productSalesCache.set(product.id, productSales);
+    }
+  }
   
   // If no initial stock date is set, use all sales (legacy behavior)
   if (!initialStockDate) {
@@ -82,14 +95,20 @@ export function calculateStockFinal(
 /**
  * Find all sales that match a specific product
  */
-function findProductSales(product: Product, allSales: RegisterSale[]): RegisterSale[] {
+function findProductSales(product: Product, allSales: RegisterSale[], useCache: boolean = true): RegisterSale[] {
+  // Check cache first
+  if (useCache && productSalesCache.has(product.id)) {
+    return productSalesCache.get(product.id)!;
+  }
+  
   const normalizeString = (str: string) => 
     str.toLowerCase().trim().replace(/\s+/g, ' ');
 
   const normalizedProductName = normalizeString(product.name);
   const normalizedProductCategory = normalizeString(product.category);
 
-  return allSales.filter(sale => {
+  // Use more efficient filtering
+  const result = allSales.filter(sale => {
     const normalizedSaleName = normalizeString(sale.product);
     const normalizedSaleCategory = normalizeString(sale.category);
     
@@ -107,6 +126,13 @@ function findProductSales(product: Product, allSales: RegisterSale[]): RegisterS
     
     return false;
   });
+  
+  // Store in cache
+  if (useCache) {
+    productSalesCache.set(product.id, result);
+  }
+  
+  return result;
 }
 
 /**
@@ -114,7 +140,7 @@ function findProductSales(product: Product, allSales: RegisterSale[]): RegisterS
  */
 export function validateStockConfiguration(
   product: Product, 
-  allSales: RegisterSale[]
+  allSales: RegisterSale[],
 ): StockValidationWarning[] {
   const warnings: StockValidationWarning[] = [];
   
@@ -141,7 +167,7 @@ export function validateStockConfiguration(
   }
   
   // Check for sales before stock date
-  const productSales = findProductSales(product, allSales);
+  const productSales = findProductSales(product, allSales, true);
   const salesBeforeStockDate = productSales.filter(sale => 
     isBefore(sale.date, startOfDay(stockDate))
   );
@@ -163,7 +189,7 @@ export function validateStockConfiguration(
  */
 export function calculateAggregatedStockStats(
   products: Product[],
-  allSales: RegisterSale[]
+  allSales: RegisterSale[],
 ): {
   totalProducts: number;
   totalStock: number;
@@ -179,7 +205,7 @@ export function calculateAggregatedStockStats(
   let inconsistentStock = 0;
   
   products.forEach(product => {
-    const calculation = calculateStockFinal(product, allSales);
+    const calculation = calculateStockFinal(product, allSales, true);
     
     totalStock += calculation.finalStock;
     totalSold += calculation.validSales.reduce((sum, sale) => sum + sale.quantity, 0);
@@ -222,4 +248,11 @@ export function formatStockDate(dateString: string): string {
   } catch {
     return dateString;
   }
+}
+
+/**
+ * Clear the product sales cache - call this when sales data changes
+ */
+export function clearProductSalesCache(): void {
+  productSalesCache.clear();
 }

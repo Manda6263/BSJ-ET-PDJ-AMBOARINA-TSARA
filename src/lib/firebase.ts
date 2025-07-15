@@ -6,13 +6,13 @@ import { getAnalytics } from 'firebase/analytics';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDvnLRDGEzEPT0lndhb24cJu0un8D3bm6w",
-  authDomain: "plaisir-des-jeux.firebaseapp.com",
-  projectId: "plaisir-des-jeux",
-  storageBucket: "plaisir-des-jeux.firebasestorage.app",
-  messagingSenderId: "188768357815",
-  appId: "1:188768357815:web:a078b688777e270090ac32",
-  measurementId: "G-RC8YEL8P7Q"
+  apiKey: "AIzaSyA8OyZsCiyqV1d_qabSjgXkYCUeJGoo690",
+  authDomain: "beuasejour.firebaseapp.com",
+  projectId: "beuasejour",
+  storageBucket: "beuasejour.firebasestorage.app",
+  messagingSenderId: "1039638627856",
+  appId: "1:1039638627856:web:d2483c24e9cc4540b3ec95",
+  measurementId: "G-5Z1Q0783N3"
 };
 
 // Initialize Firebase
@@ -98,7 +98,7 @@ export interface FirestoreAlert {
 // Environment configuration
 export const ENV_CONFIG = {
   isDevelopment: true,
-  isProduction: true,
+  isProduction: false,
   apiUrl: 'https://beuasejour.firebaseapp.com',
   enableAnalytics: true,
   enablePerformanceMonitoring: true,
