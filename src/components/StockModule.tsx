@@ -87,6 +87,7 @@ const ProductRow = React.memo(({
     <motion.tr
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
       className={`border-b border-gray-700/50 hover:bg-gray-700/20 transition-colors duration-200 ${
         isSelected ? 'bg-cyan-500/10' : ''
       }`}
@@ -485,6 +486,16 @@ function StockModule({
         </div>
         
         <div className="flex space-x-3">
+          <button
+            onClick={handleExport}
+            className="bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold 
+                       py-3 px-6 rounded-xl hover:from-green-600 hover:to-green-700 
+                       transition-all duration-200 flex items-center space-x-2"
+          >
+            <Download className="w-5 h-5" />
+            <span>Exporter Excel</span>
+          </button>
+          
           <button
             onClick={onRefreshData}
             className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold 
