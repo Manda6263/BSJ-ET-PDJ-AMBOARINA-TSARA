@@ -4,9 +4,6 @@ import { format, parseISO, isAfter, isBefore, startOfDay } from 'date-fns';
 // Create a cache for product sales to avoid repeated filtering
 const productSalesCache = new Map<string, RegisterSale[]>();
 
-// Create a cache for product sales to avoid repeated filtering
-const productSalesCache = new Map<string, RegisterSale[]>();
-
 export interface StockCalculationResult {
   finalStock: number;
   validSales: RegisterSale[];
@@ -36,15 +33,6 @@ export function calculateStockFinal(
   
   // Find all sales for this product (with caching)
   let productSales: RegisterSale[];
-  
-  if (useCache && productSalesCache.has(product.id)) {
-    productSales = productSalesCache.get(product.id)!;
-  } else {
-    productSales = findProductSales(product, allSales);
-    if (useCache) {
-      productSalesCache.set(product.id, productSales);
-    }
-  }
   
   if (useCache && productSalesCache.has(product.id)) {
     productSales = productSalesCache.get(product.id)!;
@@ -108,11 +96,6 @@ export function calculateStockFinal(
  * Find all sales that match a specific product
  */
 function findProductSales(product: Product, allSales: RegisterSale[], useCache: boolean = true): RegisterSale[] {
-  // Check cache first
-  if (useCache && productSalesCache.has(product.id)) {
-    return productSalesCache.get(product.id)!;
-  }
-  
   // Check cache first
   if (useCache && productSalesCache.has(product.id)) {
     return productSalesCache.get(product.id)!;
@@ -265,13 +248,6 @@ export function formatStockDate(dateString: string): string {
   } catch {
     return dateString;
   }
-}
-
-/**
- * Clear the product sales cache - call this when sales data changes
- */
-export function clearProductSalesCache(): void {
-  productSalesCache.clear();
 }
 
 /**
