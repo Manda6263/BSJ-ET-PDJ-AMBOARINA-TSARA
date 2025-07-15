@@ -29,7 +29,6 @@ export function calculateStockFinal(
   product: Product, 
   allSales: RegisterSale[],
   useCache: boolean = true
-  useCache: boolean = true
 ): StockCalculationResult {
   // Default values
   const initialStock = product.initialStock || 0;
@@ -127,7 +126,6 @@ function findProductSales(product: Product, allSales: RegisterSale[], useCache: 
 
   // Use more efficient filtering
   const result = allSales.filter(sale => {
-  const result = allSales.filter(sale => {
     const normalizedSaleName = normalizeString(sale.product);
     const normalizedSaleCategory = normalizeString(sale.category);
     
@@ -152,13 +150,6 @@ function findProductSales(product: Product, allSales: RegisterSale[], useCache: 
   }
   
   return result;
-  
-  // Store in cache
-  if (useCache) {
-    productSalesCache.set(product.id, result);
-  }
-  
-  return result;
 }
 
 /**
@@ -166,7 +157,7 @@ function findProductSales(product: Product, allSales: RegisterSale[], useCache: 
  */
 export function validateStockConfiguration(
   product: Product, 
-  allSales: RegisterSale[],
+  allSales: RegisterSale[]
 ): StockValidationWarning[] {
   const warnings: StockValidationWarning[] = [];
   
@@ -215,7 +206,7 @@ export function validateStockConfiguration(
  */
 export function calculateAggregatedStockStats(
   products: Product[],
-  allSales: RegisterSale[],
+  allSales: RegisterSale[]
 ): {
   totalProducts: number;
   totalStock: number;
