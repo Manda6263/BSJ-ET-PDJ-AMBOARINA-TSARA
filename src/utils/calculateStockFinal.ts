@@ -107,45 +107,25 @@ function findProductSales(product: Product, allSales: RegisterSale[], useCache: 
   const normalizedProductName = normalizeString(product.name);
   const normalizedProductCategory = normalizeString(product.category);
 
-  // Create a map to track which sales have been assigned to products
-  // This prevents double-counting sales across multiple products
-  const saleAssignmentMap = new Map<string, boolean>();
-  
-  // First pass: exact matches only
-  const exactMatches = allSales.filter(sale => {
+  // Use more efficient filtering
+  const result = allSales.filter(sale => {
     const normalizedSaleName = normalizeString(sale.product);
     const normalizedSaleCategory = normalizeString(sale.category);
     
-    return normalizedSaleName === normalizedProductName && 
-           normalizedSaleCategory === normalizedProductCategory;
-  });
-  
-  // Mark exact matches as assigned
-  exactMatches.forEach(sale => saleAssignmentMap.set(sale.id, true));
-  
-  // Second pass: fuzzy matches, but only for unassigned sales
-  const fuzzyMatches = allSales.filter(sale => {
-    // Skip if already assigned
-    if (saleAssignmentMap.has(sale.id)) return false;
+    // Exact match first
+    if (normalizedSaleName === normalizedProductName && 
+        normalizedSaleCategory === normalizedProductCategory) {
+      return true;
+    }
     
-    const normalizedSaleName = normalizeString(sale.product);
-    const normalizedSaleCategory = normalizeString(sale.category);
-    
-    // Only match within same category
+    // Fuzzy match for similar names in same category
     if (normalizedSaleCategory === normalizedProductCategory) {
-      // Check for partial name matches
-      if (normalizedSaleName.includes(normalizedProductName) || 
-          normalizedProductName.includes(normalizedSaleName)) {
-        saleAssignmentMap.set(sale.id, true);
-        return true;
-      }
+      return normalizedSaleName.includes(normalizedProductName) || 
+             normalizedProductName.includes(normalizedSaleName);
     }
     
     return false;
   });
-  
-  // Combine exact and fuzzy matches
-  const result = [...exactMatches, ...fuzzyMatches];
   
   // Store in cache
   if (useCache) {
@@ -160,7 +140,7 @@ function findProductSales(product: Product, allSales: RegisterSale[], useCache: 
  */
 export function validateStockConfiguration(
   product: Product, 
-  allSales: RegisterSale[]
+  allSales: RegisterSale[],
 ): StockValidationWarning[] {
   const warnings: StockValidationWarning[] = [];
   
@@ -209,7 +189,7 @@ export function validateStockConfiguration(
  */
 export function calculateAggregatedStockStats(
   products: Product[],
-  allSales: RegisterSale[]
+  allSales: RegisterSale[],
 ): {
   totalProducts: number;
   totalStock: number;

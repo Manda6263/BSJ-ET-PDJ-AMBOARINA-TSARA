@@ -382,9 +382,6 @@ export function useFirebaseData() {
       return;
     }
     
-    // Track total quantity sold for verification
-    let totalQuantitySoldAcrossAllProducts = 0;
-    
     // ✅ ENHANCED: Use the new stock calculation system
     const updatedProducts = products.map(product => {
       const calculation = calculateStockFinal(product, registerSales);
@@ -394,7 +391,6 @@ export function useFirebaseData() {
       
       // Use calculated values from the new system
       const totalQuantitySold = calculation.validSales.reduce((sum, sale) => sum + sale.quantity, 0);
-      totalQuantitySoldAcrossAllProducts += totalQuantitySold;
       const finalStock = calculation.finalStock;
       
       const updated = {
@@ -446,14 +442,6 @@ export function useFirebaseData() {
       }
     } catch (error) {
       console.error('❌ Error updating product quantities in Firebase:', error);
-    }
-
-    // Log verification of total quantity sold
-    const totalQuantityInSales = registerSales.reduce((sum, sale) => sum + sale.quantity, 0);
-    console.log(`📊 Verification - Total quantity in sales: ${totalQuantityInSales}, Total quantity sold across products: ${totalQuantitySoldAcrossAllProducts}`);
-    
-    if (totalQuantityInSales !== totalQuantitySoldAcrossAllProducts) {
-      console.warn(`⚠️ Quantity mismatch detected: Sales total (${totalQuantityInSales}) ≠ Products total sold (${totalQuantitySoldAcrossAllProducts})`);
     }
 
     // Regenerate alerts after stock changes
